@@ -1,0 +1,17 @@
+{
+  "Windows_Chrome": {
+    "viewport": { "width": 1500, "height": 800 },
+    "device_scale_factor": 1,
+    "is_mobile": false,
+    "has_touch": false,
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  },
+
+  "Mobile_Chrome": {
+    "viewport": { "width": 360, "height": 780 },
+    "device_scale_factor": 3,
+    "is_mobile": true,
+    "has_touch": true,
+    "user_agent": "Mozilla/5.0 (Linux; Android 14; SM-S921N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36"
+  }
+}
