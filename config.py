@@ -12,8 +12,8 @@ URLS = {
 }
 
 Account={
-    "testid_1" : "stg@medisolveai.com",
-    "testid_2" : "test@medisolveai.com",
+    "testid_1" : "stg@medisolveai.com", #상담사 1 대시보드 진입 가능  
+    "testid_2" : "test@medisolveai.com", #상담사2
     "testpw" : "12341234",
     "wrongpw" : "00000000"
 }

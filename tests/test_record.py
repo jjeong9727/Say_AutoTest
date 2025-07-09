@@ -1,7 +1,7 @@
 import pytest
 from playwright.sync_api import Page, expect
 from config import Account, URLS
-from helpers.record_utils import say_login, select_customer, check_logout_popup, run_record, save_record_to_file
+from helpers.record_utils import login, select_customer, check_logout_popup, run_record, save_record_to_json
 
 @pytest.mark.skip_browser("webkit")
 # 기존 고객 상담 녹음
@@ -12,7 +12,7 @@ def test_record_exist_customer(page:Page, device_profile):
     counselor = "홍길동"
     cust_name = "자동화 고객"
     cust_contact = "01012345678"
-    say_login(page)
+    login(page, "record", "testid_1") # 계정 1 로그인 
     page.locator('[data-testid="btn_customer_exist"]').click()
     expect(page.locator(f'[data-testid="txt_counselor_name"]')).to_have_text(counselor, timeout=3000)
     page.wait_for_timeout(500)
@@ -28,13 +28,16 @@ def test_record_exist_customer(page:Page, device_profile):
 
     info = run_record(page)
 
-    save_record_to_file(
+    save_record_to_json(
         counselor=counselor,
         cust_name=cust_name,
         cust_contact=cust_contact,
         start_time=info["start_time"],
         recorded_time=info["recorded_time"]
     )   
+    page.wait_for_timeout(1000)
+    page.locator('[data-testid="btn_new_record"]').click()
+    expect(page.locator('[data-testid="btn_customer_exist"]')).to_be_visible(timeout=3000)
 
 
 # 신규 고객 상담 녹음  
@@ -45,7 +48,8 @@ def test_record_exist_customer(page:Page, device_profile):
     counselor = "홍길동"
     cust_name = "자동화 신규고객"
     cust_contact = "newcust@test.com"
-    say_login(page)
+    login(page, "record", "testid_2") # 계정 2 로그인 
+
     
     page.locator('[data-testid="btn_customer_new"]').click()
     expect(page.locator(f'[data-testid="txt_counselor_name"]')).to_have_text(counselor, timeout=3000)
@@ -63,14 +67,17 @@ def test_record_exist_customer(page:Page, device_profile):
 
     info = run_record(page)
 
-    save_record_to_file(
+    save_record_to_json(
         counselor=counselor,
         cust_name=cust_name,
         cust_contact=cust_contact,
         start_time=info["start_time"],
         recorded_time=info["recorded_time"]
     )   
-
+    page.wait_for_timeout(1000)
+    page.locator('[data-testid="btn_new_record"]').click()
+    expect(page.locator('[data-testid="btn_customer_exist"]')).to_be_visible(timeout=3000)
+    
 # 녹음 진행 후 취소 
 def test_record_cancel(page:Page, device_profile):
     if not device_profile["is_mobile"]:
@@ -81,7 +88,7 @@ def test_record_cancel(page:Page, device_profile):
     cust_contact = "01012345678"
     notice_cancel = "상담을 취소할까요?"
 
-    say_login(page)
+    login(page, "record")
     
     page.locator('[data-testid="btn_customer_new"]').click()
     expect(page.locator(f'[data-testid="txt_counselor_name"]')).to_have_text(counselor, timeout=3000)
@@ -95,11 +102,21 @@ def test_record_cancel(page:Page, device_profile):
     page.locator('[data-testid="btn_start"]').click()
     page.wait_for_timeout(1000)
 
-    page.click('[data-testid="start"]')
+    page.click('[data-testid="btn_start"]')
     page.wait_for_timeout(5000)
-    page.click('[data-testid="cancel"]')
+    page.click('[data-testid="btn_cancel"]')
     page.wait_for_timeout(1000)
     expect('[data-testid="txt_cancel"]').to_have_text(notice_cancel, timeout=3000)
     page.wait_for_timeout(500)
+    
     page.click('[data-testid="btn_yes"]')
+    expect(page.locator('[data-testid="txt_time_record"]')).to_have_text("00:00", timeout=3000)
+    page.wait_for_timeout(1000)
+
+    page.locator('[data-testid="btn_start"]').click()
+    page.wait_for_timeout(3000)
+    page.click('[data-testid="btn_cancel"]')
+    page.wait_for_timeout(1000)
+    page.click('[data-testid="btn_no"]')
     expect(page.locator('[data-testid="btn_customer_exist"]')).to_be_visible(timeout=3000)
+    

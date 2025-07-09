@@ -7,7 +7,7 @@ def test_login_flow(page: Page, device_profile):
     if not device_profile["is_mobile"]:
         pytest.skip("❌ 모바일 환경에서만 실행됩니다.")
         
-    page.goto(URLS["say_login"])
+    page.goto(URLS["record_login"])
     page.wait_for_timeout(2000)
 
     page.fill('[data-testid="input_pw"]', Account["testid_1"])
@@ -24,7 +24,7 @@ def test_login_flow(page: Page, device_profile):
     page.wait_for_timeout(500)
     page.click('[data-testid="btn_login"]')
     page.wait_for_timeout(2000)
-    page.wait_for_url(URLS["say_home"])
+    page.wait_for_url(URLS["record_home"])
     page.wait_for_timeout(1000)
 
     txt_logout = "로그아웃할까요?"
@@ -36,4 +36,4 @@ def test_login_flow(page: Page, device_profile):
     page.click('[data-testid="btn_yes"]')
     page.wait_for_timeout(500)
     expect(page.locator('[data-testid="toast_logout"]')).to_be_visible()
-    page.wait_for_url(URLS["say_login"])
+    page.wait_for_url(URLS["record_login"])
