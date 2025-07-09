@@ -241,8 +241,6 @@ def download_files(page: Page, consult_date_str: str, counselor_name: str, custo
 
 # ✅ 상담 내역 개수 확인
 def count_all_history(page) -> int:
-    page.goto(URLS["say_history"])
-    page.wait_for_timeout(2000)
 
     total_rows = 0
     while True:
@@ -258,6 +256,6 @@ def count_all_history(page) -> int:
             break
 
         next_button.click()
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(2000)
     return total_rows
 
