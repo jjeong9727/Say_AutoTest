@@ -4,7 +4,7 @@ from config import Account, URLS
 import random
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 RECORD_FILE = Path("data/record.json")
 
 # ✅ 로그인 공통 함수
@@ -259,3 +259,13 @@ def count_all_history(page) -> int:
         page.wait_for_timeout(2000)
     return total_rows
 
+# ✅ 캘린더 어제 날짜 선택
+def select_yesterday(page):
+    # 어제 날짜 계산
+    yesterday = datetime.today() - timedelta(days=1)
+    mmdd = yesterday.strftime("%m%d")  # MMDD 형식 → 예: 0708
+
+    # 해당 날짜 버튼 클릭
+    page.locator(f'[data-testid="btn_day_{mmdd}"]').click()
+    print(f"📅 어제 날짜 선택됨: {mmdd}")
+    return mmdd
