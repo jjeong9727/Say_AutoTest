@@ -68,7 +68,8 @@ def test_compare_dashboard(page:Page):
 
     # 어제 데이터랑 오늘 데이터 비교
     page.locator('[data-testid="input_date"]').click()
-    page.wait_for_timeout(1000)
+    expect(page.locator(f'[data-testid="btn_next"]')).to_be_disabled(timeout=3000)
+    page.wait_for_timeout(500)
     mmdd = select_yesterday(page)
     txt_nodata = "상담 대시보드가 없어요"
     txt_title = "상담 전체 요약"
