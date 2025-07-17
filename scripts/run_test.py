@@ -15,10 +15,11 @@ SUMMARY_FILE = "scripts/summary.json"
 
 # 실행할 테스트 
 tests = [
-    "test/login.py",
-    "test/record_status.py",
-    "test/record.py",
-    "test/history.py"
+    "tests/test_login.py",
+    "tests/test_record_status.py",
+    "tests/test_record.py",
+    # "tests/test_history.py",
+    # "tests/test_history_search.py",
 ]
 
 # ✅ 기존 결과 파일 제거

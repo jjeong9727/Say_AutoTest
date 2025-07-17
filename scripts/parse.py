@@ -8,6 +8,7 @@ full_name_mapping = {
     "test/record.py":"상담 녹음 테스트",
     "test/record_status.py":"상담 진행 상태 테스트",
     "test/history.py":"상담내역 확인 테스트",
+    "test/history_search.py":"상담내역 검색 테스트",
 }
 category_prefix = {
     "login": "로그인",

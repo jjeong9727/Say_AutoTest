@@ -1,0 +1,26 @@
+[
+  {
+    "name": "test_login 테스트",
+    "file": "tests/test_login.py",
+    "status": "FAIL",
+    "message": "FAILED tests/test_login.py::test_login_flow[Mobile Chrome] - AssertionError: ...",
+    "stack_summary": " → ======================== 1 failed, 1 skipped in 14.96s ========================",
+    "device": null
+  },
+  {
+    "name": "test_record_status 테스트",
+    "file": "tests/test_record_status.py",
+    "status": "FAIL",
+    "message": "tests\\test_record_status.py:73: AssertionError",
+    "stack_summary": " → ======================== 1 failed, 1 skipped in 37.70s ========================",
+    "device": null
+  },
+  {
+    "name": "test_record 테스트",
+    "file": "tests/test_record.py",
+    "status": "FAIL",
+    "message": "FAILED tests/test_record.py::test_record_cancel[Mobile Chrome] - AssertionErr...",
+    "stack_summary": " → ============= 1 failed, 2 passed, 3 skipped in 224.21s (0:03:44) ==============",
+    "device": null
+  }
+]

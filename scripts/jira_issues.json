@@ -1,0 +1,38 @@
+[
+  {
+    "summary": "[자동화] test_login 테스트",
+    "description": "에러 메시지: FAILED tests/test_login.py::test_login_flow[Mobile Chrome] - AssertionError: ...\n\n파일: tests/test_login.py\n테스트 이름: test_login 테스트\n\n스택 요약:\n → ======================== 1 failed, 1 skipped in 14.96s ========================",
+    "project": "TEST",
+    "issuetype": "Bug",
+    "priority": "Medium",
+    "labels": [
+      "auto-test",
+      "fail"
+    ],
+    "file": "tests/test_login.py"
+  },
+  {
+    "summary": "[자동화] test_record_status 테스트",
+    "description": "에러 메시지: tests\\test_record_status.py:73: AssertionError\n\n파일: tests/test_record_status.py\n테스트 이름: test_record_status 테스트\n\n스택 요약:\n → ======================== 1 failed, 1 skipped in 37.70s ========================",
+    "project": "TEST",
+    "issuetype": "Bug",
+    "priority": "Medium",
+    "labels": [
+      "auto-test",
+      "fail"
+    ],
+    "file": "tests/test_record_status.py"
+  },
+  {
+    "summary": "[자동화] test_record 테스트",
+    "description": "에러 메시지: FAILED tests/test_record.py::test_record_cancel[Mobile Chrome] - AssertionErr...\n\n파일: tests/test_record.py\n테스트 이름: test_record 테스트\n\n스택 요약:\n → ============= 1 failed, 2 passed, 3 skipped in 224.21s (0:03:44) ==============",
+    "project": "TEST",
+    "issuetype": "Bug",
+    "priority": "Medium",
+    "labels": [
+      "auto-test",
+      "fail"
+    ],
+    "file": "tests/test_record.py"
+  }
+]

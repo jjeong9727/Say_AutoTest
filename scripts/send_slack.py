@@ -1,7 +1,6 @@
 import os
 import json
 import requests
-import sys
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
@@ -9,23 +8,33 @@ from dotenv import load_dotenv
 load_dotenv()
 
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
-RESULT_FILE = "scripts/summary_.json"
+RESULT_FILE = "test_results.json"
 
 # 시간 포맷 (KST)
 KST = timezone(timedelta(hours=9))
 now = datetime.now(KST)
 seoul_time = now.strftime("%Y-%m-%d %H:%M:%S")
 
-# 이슈 맵 받아오기 (run_test.py에서 sys.argv[1]로 전달됨)
-if len(sys.argv) > 1:
-    try:
-        issue_map = json.loads(sys.argv[1])
-    except Exception:
-        issue_map = {}
-else:
-    issue_map = {}
+# 버전 정보 불러오기
+def load_version():
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    version_path = os.path.join(base_path, "..", "tests", "version_info.json")
 
-print(f"💡 issue_map: {issue_map}")
+    try:
+        with open(version_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data.get("version", "버전 정보 없음")
+    except FileNotFoundError:
+        return "버전 정보 없음"
+
+# 테스트 파일명 → 한글 매핑
+test_file_to_korean = {
+    "test/login.py":"로그인 테스트",
+    "test/record.py":"상담 녹음 테스트",
+    "test/record_status.py":"상담 진행 상태 테스트",
+    "test/history.py":"상담내역 확인 테스트",
+    "test/history_search.py":"상담내역 검색 테스트",
+}
 
 def load_test_results(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -46,46 +55,36 @@ def get_total_duration_from_results(results):
             continue
     return format_duration(total)
 
-def get_device_label(device_str):
-    if not device_str:
-        return "Unknown"
-    if "Mobile" in device_str:
-        return "Mobile"
-    return "PC"
-
-def build_slack_message(test_results, issue_map):
+def build_slack_message(test_results):
+    version = load_version()
     success_count = 0
     fail_count = 0
     skip_count = 0
     detail_lines = []
 
     for idx, result in enumerate(test_results, 1):
+        test_name = result.get("test_name")
         status = result.get("status")
         message = result.get("message", "")
-        test_file = result.get("file", "")
-        test_name = result.get("name", result.get("test_name"))
-        device_info = result.get("device", "")
-        device_label = get_device_label(device_info)
 
-        jira_id = issue_map.get(test_file) or issue_map.get(test_name)
+        korean_name = test_file_to_korean.get(test_name, test_name)
 
         if status == "PASS":
             success_count += 1
-            detail_lines.append(f"{idx}. ✅[PASS] [{device_label}] {test_name}")
+            detail_lines.append(f"{idx}. ✅[PASS] {korean_name}")
         elif status == "FAIL":
             fail_count += 1
-            if jira_id:
-                detail_lines.append(f"{idx}. ❌[FAIL] [{device_label}] {test_name}  → JIRA: `{jira_id}`\n   {message}")
-            else:
-                detail_lines.append(f"{idx}. ❌[FAIL] [{device_label}] {test_name} \n   {message}")
+            detail_lines.append(f"{idx}. ❌[FAIL] {korean_name}\n   {message}")
         elif status == "SKIP":
             skip_count += 1
-            detail_lines.append(f"{idx}. [SKIP] [{device_label}] {test_name} ")
+            detail_lines.append(f"{idx}. [SKIP] {korean_name}")
 
     total_time = get_total_duration_from_results(test_results)
 
-    slack_message = f":mega: *Say* 자동화 테스트 결과 ({seoul_time})\n"
-    slack_message += f"Total: {len(test_results)} | ✅ PASS: {success_count} | ❌ FAIL: {fail_count}\n\n"
+    slack_message = f":mega: *[CenturionSay] 자동화 테스트 결과* ({seoul_time})\n"
+    slack_message += f"버전: `{version}`\n"
+    slack_message += f"Total: {len(test_results)} | ✅PASS: {success_count} | FAIL: ❌{fail_count} \n"
+    slack_message += f":stopwatch: 전체 수행 시간: {total_time}\n\n"
     slack_message += "\n".join(detail_lines)
 
     return slack_message
@@ -100,6 +99,6 @@ def send_slack_message(message):
 
 if __name__ == "__main__":
     test_results = load_test_results(RESULT_FILE)
-    slack_message = build_slack_message(test_results, issue_map)
+    slack_message = build_slack_message(test_results)
     send_slack_message(slack_message)
     print("✅ 슬랙 알림이 전송되었습니다.")

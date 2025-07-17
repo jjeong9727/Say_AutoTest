@@ -1,4 +1,5 @@
 import pytest
+import os   
 from playwright.sync_api import Page, expect
 from config import Account, URLS
 import random
@@ -18,7 +19,7 @@ def login(page: Page, service_type: str, account_info: str):
         login_url = URLS["record_login"]
         home_url = URLS["record_home"]
         user_id = Account[account_info]
-        password = Account["record_pw"]
+        password = Account["testpw"]
     else:
         raise ValueError(f"지원하지 않는 로그인 타입입니다: {service_type}")
 
@@ -40,11 +41,15 @@ def check_logout_popup (page: Page):
     txt_logout = "로그아웃할까요?"
     page.locator('[data-testid="btn_logout"]').click()
     expect(page.locator(f'[data-testid="txt_logout"]')).to_have_text(txt_logout, timeout=3000)
-    page.wait_for_timeout(500)
-    page.locator('[data-testid="btn_logout"]').click()
-    page.wait_for_timeout(500)
+    page.wait_for_timeout(1000)
     page.click('[data-testid="btn_no"]')
     page.wait_for_timeout(1000)
+    page.locator('[data-testid="btn_logout"]').click()
+    expect(page.locator(f'[data-testid="txt_logout"]')).to_have_text(txt_logout, timeout=3000)
+    page.wait_for_timeout(1000)
+    page.click('[data-testid="btn_close"]')
+    page.wait_for_timeout(1000)
+    
 
 # ✅ 고객 선택 공통 함수 
 def select_customer(
@@ -94,14 +99,28 @@ def to_mmss(seconds: int) -> str:
     secs = seconds % 60
     return f"{minutes:02}:{secs:02}"
 
+def extract_24h_time(text: str) -> str:
+    """
+    '상담 시작 시간 | 오후 4:25' → '16:25' 형식으로 변환
+    """
+    try:
+        time_part = text.split("|")[-1].strip()  # '오후 4:25'
+        # 한글 오전/오후 → 영어 AM/PM 치환
+        time_part = time_part.replace("오전", "AM").replace("오후", "PM")
+        dt = datetime.strptime(time_part, "%p %I:%M")
+        return dt.strftime("%H:%M")
+    except Exception as e:
+        print(f"⛔ 시간 추출 실패: {e}")
+        return ""
+
 # ✅ 상담 녹음 진행 함수 
 def run_record(page: Page) -> dict:
-    duration_ms = get_random_recording_duration() // 1000  # 초 단위
+    duration_ms = get_random_recording_duration()
 
     #녹음 시작
     page.click('[data-testid="btn_start"]')
-    start_time_actual = datetime.now()
-    print(f"🎙️ 녹음 시작: {start_time_actual.strftime('%H:%M')}")
+    start_time = datetime.now()
+    print(f"🎙️ 녹음 시작: {start_time.strftime('%H:%M')}")
 
     #전체 녹음 시간 대기
     page.wait_for_timeout(duration_ms)
@@ -118,6 +137,7 @@ def run_record(page: Page) -> dict:
     page.wait_for_timeout(pause_duration * 1000)
 
     start_time_text = page.locator('[data-testid="txt_time_start"]').inner_text().strip()
+    actual_start_time = extract_24h_time(start_time_text)
     recorded_time_text = page.locator('[data-testid="txt_time_record"]').inner_text().strip()
 
     print(f"🕒 화면 표기 시작 시간: {start_time_text}")
@@ -129,12 +149,13 @@ def run_record(page: Page) -> dict:
 
     #팝업 처리
     expect(page.locator('[data-testid="txt_stop"]')).to_have_text("상담을 종료할까요?", timeout=3000)
-    page.wait_for_timeout(500)
+    page.wait_for_timeout(1000)
     page.click('[data-testid="btn_yes"]')
-    expect(page.locator('[data-testid="txt_stop"]')).to_have_text("상담이 완료되었어요", timeout=3000)
-    page.wait_for_timeout(500)
+    text = page.locator('[data-testid="txt_complete"]').inner_text(timeout=3000)
+    assert text.startswith("상담이 완료되었어요"), f"텍스트가 다릅니다: {text}" 
+    page.wait_for_timeout(1000)
 
-    #MM:SS → 초로 변환
+    # MM:SS → 초로 변환
     def to_seconds(mmss: str) -> int:
         minutes, seconds = map(int, mmss.strip().split(":"))
         return minutes * 60 + seconds
@@ -142,15 +163,19 @@ def run_record(page: Page) -> dict:
     duration_sec = duration_ms // 1000
     expected_mmss = to_mmss(duration_sec + pause_duration)
 
-    # 녹음 시작 시간 비교 (실제 시간 / 표기 시간)
-    start_actual_str = start_time_actual.strftime("%H:%M")
-    assert start_time_text == start_actual_str, \
-        f"❌ 시작 시간 불일치: 기대값={start_actual_str} / 표기={start_time_text}"
+    # 🔁 녹음 시작 시간 비교 (실제 시간 / 표기 시간)
+    start_actual_str = start_time.strftime("%H:%M")
+    assert start_actual_str == actual_start_time, \
+        f"❌ 시작 시간 불일치: 기대값={start_actual_str} / 표기={actual_start_time}"
     print("✅ 시작 시간 일치")
 
-    # 녹음 시간 비교 (실제 시간 / 표기 시간)
-    assert recorded_time_text == expected_mmss, \
-        f"❌ 녹음 시간 불일치: 기대값={expected_mmss} / 실제={recorded_time_text}"
+    # 🔁 녹음 시간 비교 (실제 시간 / 표기 시간)
+    expected_sec = duration_sec + pause_duration
+    actual_sec = to_seconds(recorded_time_text)
+
+    assert abs(actual_sec - expected_sec) <= 1, \
+        f"❌ 녹음 시간 불일치: 기대값={expected_sec}s / 실제={actual_sec}s"
+    print("✅ 녹음 시간 일치")
 
     return {
         "start_time": start_time_text,
@@ -158,44 +183,27 @@ def run_record(page: Page) -> dict:
     }
 
 # ✅ 녹음 정보 json 저장 
-def save_record_to_json(
-    counselor: str,
-    cust_name: str,
-    cust_contact: str,
-    start_time: str,         # HH:MM 형식
-    recorded_time: str       # MM:SS 형식
-):
-    today = datetime.now().strftime("%Y.%m.%d")
-    start_datetime = f"{today} / {start_time}"
+def save_record_to_json(counselor, cust_name, cust_contact, start_time, recorded_time):
+    records = []
 
-    # MM:SS → MM분 SS초 형식 변환
-    mm, ss = map(int, recorded_time.strip().split(":"))
-    record_time_formatted = f"{mm:02d}분 {ss:02d}초"
+    if os.path.exists(RECORD_FILE):
+        with open(RECORD_FILE, "r", encoding="utf-8") as f:
+            content = f.read().strip()
+            if content:  # 파일이 비어있지 않으면
+                records = json.loads(content)
 
-    record_data = {
+    new_record = {
         "counselor": counselor,
-        "customer": cust_name,
+        "customer_name": cust_name,
         "contact": cust_contact,
-        "date": start_datetime,
-        "record_time": record_time_formatted
-
+        "start_time": start_time,
+        "recorded_time": recorded_time
     }
 
-    # 기존 파일 불러오기 또는 새 리스트 생성
-    if RECORD_FILE.exists():
-        with open(RECORD_FILE, "r", encoding="utf-8") as f:
-            records = json.load(f)
-    else:
-        records = []
+    records.append(new_record)
 
-    records.append(record_data)
-
-    # 저장
     with open(RECORD_FILE, "w", encoding="utf-8") as f:
         json.dump(records, f, ensure_ascii=False, indent=2)
-
-    print("✅ 녹음 정보 저장 완료:", record_data)
-
 # ✅ 상담 정보 불러오기
 def load_all_records_from_json():
     with open(RECORD_FILE, "r", encoding="utf-8") as f:

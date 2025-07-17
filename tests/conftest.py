@@ -1,10 +1,12 @@
 import json
 import pytest
 import os
+import sys
 from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 from playwright.sync_api import sync_playwright
 
-DEVICE_PROFILE_FILE = "data/device_profiles.json"
+DEVICE_PROFILE_FILE = "tests/device_profile.json"
 
 def load_device_profiles():
     with open(DEVICE_PROFILE_FILE, encoding="utf-8") as f:
@@ -12,11 +14,11 @@ def load_device_profiles():
 
 @pytest.fixture(scope="session")
 def device_profiles():
-    return load_device_profiles()
+    return load_device_profiles()  # 이건 dict을 반환
 
 @pytest.fixture(params=["Mobile Chrome", "PC Chrome"], scope="function")
 def device_profile(request, device_profiles):
-    selected = next((d for d in device_profiles if d["name"] == request.param), None)
+    selected = device_profiles.get(request.param)
     if not selected:
         pytest.skip(f"No matching device found: {request.param}")
     return selected
